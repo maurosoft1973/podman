@@ -20,8 +20,10 @@ jobs:
         id: get_tag
         run: |
           tag=$(curl -s https://api.github.com/repos/containers/podman/releases/latest | jq -r .tag_name)
+          version=$(echo "$tag" | sed 's/^v//')
           echo "Ultima release: $tag"
           echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Clone Podman upstream source at tag
         run: |
@@ -67,14 +69,14 @@ jobs:
           mkdir -p pkg-deb/DEBIAN
           cat <<EOF > pkg-deb/DEBIAN/control
           Package: podman
-          Version: ${{ steps.get_tag.outputs.tag }}
+          Version: ${{ steps.get_tag.outputs.version }}
           Section: utils
           Priority: optional
           Architecture: amd64
-          Maintainer: Mauro Cardillo <mauro.cardillo@gmail.com>
+          Maintainer: Your Name <you@example.com>
           Description: Podman CLI built from upstream source
           EOF
-          dpkg-deb --build pkg-deb podman-${{ steps.get_tag.outputs.tag }}.deb
+          dpkg-deb --build pkg-deb podman-${{ steps.get_tag.outputs.version }}.deb
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -82,7 +84,7 @@ jobs:
           name: podman-artifacts
           path: |
             podman-amd64-${{ steps.get_tag.outputs.tag }}.tar.gz
-            podman-${{ steps.get_tag.outputs.tag }}.deb
+            podman-${{ steps.get_tag.outputs.version }}.deb
 
       - name: Publish to release (if manual trigger)
         if: github.event_name == 'workflow_dispatch'
